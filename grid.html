@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Take phot from Webcam and grid show</title>
+  <style>
+    .wrapper {
+      text-align: center;
+    }
+
+    button {
+      display: block;
+    }
+
+    .wrapper video {
+      width: 320px;
+      margin: 15px;
+      height: 240px;
+      border: 1px solid;
+    }
+
+    .wrapper button {
+      color: white;
+      outline: none;
+      font-size: 16px;
+      min-width: 320px;
+      font-weight: bold;
+      padding: 10px 20px;
+      margin: 15px auto;
+      background-color: green;
+    }
+
+    #disconnect-webcam {
+      display: none;
+      background-color: red;
+    }
+
+    #take-photo {
+      display: none;
+      background-color: blue;
+    }
+
+    .error {
+      color: red;
+    }
+
+    .list {
+      margin-top: 10px;
+      text-align: center;
+    }
+
+    .list .preview-item {
+      margin: 5px;
+      width: 320px;
+      height: 240px;
+      border: 1px solid;
+      position: relative;
+      display: inline-block;
+    }
+
+    .preview-item canvas {
+      width: 100%;
+      height: 100%;
+    }
+
+    .preview-item button {
+      top: 0;
+      right: 0;
+      z-index: 2;
+      padding: 0;
+      line-height: 1;
+      font-size: 20px;
+      padding: 5px 10px;
+      position: absolute;
+      border-radius: 100%;
+      background-color: red;
+      color: white;
+      outline: none;
+      cursor: pointer;
+    }
+  </style>
+
+  <script>
+    const init = () => {
+      const track = {};
+      const videoObj = { video: true };
+      const listElement = document.querySelector('.list');
+      const errorElement = document.querySelector('.error');
+      const videoElement = document.querySelector('video');
+
+      const onFailure = (error) => (errorElement.innerHTML = error);
+      const onSuccess = (stream) => {
+        track.stream = stream;
+        videoElement.width = videoElement.offsetWidth;
+
+        if (navigator.mediaDevices.getUserMedia) {
+          videoElement.srcObject = stream;
+          videoElement.play();
+        }
+      };
+
+      document.getElementById('disconnect-webcam').addEventListener('click', () => {
+        if (track.stream) {
+          track.stream.getVideoTracks()[0].stop();
+          track.stream = null;
+        }
+
+        errorElement.innerHTML = '';
+        document.getElementById('take-photo').style.display = "none";
+        document.getElementById('connect-webcam').style.display = "block";
+        document.getElementById('disconnect-webcam').style.display = "none";
+      });
+
+      document.getElementById('connect-webcam').addEventListener('click', () => {
+        if (navigator.mediaDevices.getUserMedia) {
+          navigator.mediaDevices.getUserMedia(videoObj)
+            .then(onSuccess)
+            .catch(onFailure);
+        }
+
+        errorElement.innerHTML = '';
+        document.getElementById('take-photo').style.display = "block";
+        document.getElementById('connect-webcam').style.display = "none";
+        document.getElementById('disconnect-webcam').style.display = "block";
+      });
+
+      document.getElementById('take-photo').addEventListener('click', () => {
+        const canvasElement = document.createElement('canvas');
+        canvasElement.width  = videoElement.offsetWidth;
+        canvasElement.height = videoElement.offsetHeight;
+
+        const tempcontext = canvasElement.getContext('2d');
+        const tempScale = (videoElement.height / videoElement.width);
+        tempcontext.drawImage(videoElement, 0, 0, videoElement.offsetWidth, videoElement.offsetHeight);
+
+
+        const divElement = document.createElement('div');
+        const btnElement = document.createElement('button');
+        btnElement.innerHTML = 'x';
+
+        btnElement.addEventListener('click', () => {
+          listElement.removeChild(divElement);
+        });
+
+        divElement.classList.add('preview-item');
+        divElement.appendChild(canvasElement);
+        divElement.appendChild(btnElement);
+        listElement.appendChild(divElement);
+      });
+    }
+  </script>
+</head>
+<body onload="init()">
+  <div class="wrapper" id="wrapper">
+    <div class="error"></div>
+    <div class="webcam-video">
+      <video autoplay="true"></video>
+    </div>
+    <button id="disconnect-webcam">
+      Disconenct webcam
+    </button>
+    <button id="connect-webcam">
+      Conenct webcam
+    </button>
+    <button id="take-photo">
+      Take photo
+    </button>
+  </div>
+  <div class="list">
+  </div>
+</body>
+</html>
