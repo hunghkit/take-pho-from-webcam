@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Take phot from Webcam</title>
+  <style>
+    .wrapper {
+      text-align: center;
+    }
+
+    .wrapper video, .wrapper canvas {
+      width:320px;
+      margin:15px;
+      height:240px;
+      border: 1px solid;
+    }
+
+    .wrapper button {
+      color: white;
+      margin: 0 15px;
+      outline: none;
+      font-size: 16px;
+      min-width: 320px;
+      font-weight: bold;
+      padding: 10px 20px;
+      background-color: green;
+    }
+
+    #disconnect-webcam {
+      display: none;
+      background-color: red;
+    }
+
+    #take-photo {
+      display: none;
+      background-color: blue;
+    }
+
+    .error {
+      color: red;
+    }
+  </style>
+
+  <script>
+    const init = () => {
+      const track = {};
+      const videoObj = { video: true };
+      const errorElement = document.querySelector('.error');
+      const videoElement = document.querySelector('video');
+      const canvasElement = document.querySelector('canvas');
+
+      const onFailure = (error) => (errorElement.innerHTML = error);
+      const onSuccess = (stream) => {
+        track.stream = stream;
+        videoElement.width = videoElement.offsetWidth;
+
+        if (navigator.mediaDevices.getUserMedia) {
+          videoElement.srcObject = stream;
+          videoElement.play();
+        }
+      };
+
+      document.getElementById('disconnect-webcam').addEventListener('click', () => {
+        if (track.stream) {
+          track.stream.getVideoTracks()[0].stop();
+          track.stream = null;
+        }
+
+        errorElement.innerHTML = '';
+        document.getElementById('take-photo').style.display = "none";
+        document.getElementById('disconnect-webcam').style.display = "none";
+        document.getElementById('connect-webcam').style.display = "inline-block";
+      });
+
+      document.getElementById('connect-webcam').addEventListener('click', () => {
+        if (navigator.mediaDevices.getUserMedia) {
+          navigator.mediaDevices.getUserMedia(videoObj)
+            .then(onSuccess)
+            .catch(onFailure);
+        }
+
+        errorElement.innerHTML = '';
+        document.getElementById('connect-webcam').style.display = "none";
+        document.getElementById('take-photo').style.display = "inline-block";
+        document.getElementById('disconnect-webcam').style.display = "inline-block";
+      });
+
+      document.getElementById('take-photo').addEventListener('click', () => {
+        const canvas = document.createElement('canvas');
+        canvasElement.width  = videoElement.offsetWidth;
+        canvasElement.height = videoElement.offsetHeight;
+
+        const tempcontext = canvasElement.getContext('2d');
+        const tempScale = (videoElement.height / videoElement.width);
+
+        tempcontext.drawImage(videoElement, 0, 0, videoElement.offsetWidth, videoElement.offsetHeight);
+      });
+    }
+  </script>
+</head>
+<body onload="init()">
+  <div class="wrapper" id="wrapper">
+    <div class="error"></div>
+    <div class="webcam-video">
+      <video autoplay="true"></video>
+      <canvas></canvas>
+    </div>
+    <button id="disconnect-webcam">
+      Disconenct webcam
+    </button>
+    <button id="connect-webcam">
+      Conenct webcam
+    </button>
+    <button id="take-photo">
+      Take photo
+    </button>
+  </div>
+</body>
+</html>
